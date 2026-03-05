@@ -1,3 +1,4 @@
+'use client'
 import { useState, useEffect } from 'react'
 import { Navigation, Package, DollarSign, Star, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'

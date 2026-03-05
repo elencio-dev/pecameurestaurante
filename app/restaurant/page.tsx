@@ -1,3 +1,4 @@
+'use client'
 import { useState, useEffect } from 'react'
 import { DynamicIcon } from "@/components/ui/icon";
 import { TrendingUp, Package, Star, Clock, DollarSign, Bell } from 'lucide-react'

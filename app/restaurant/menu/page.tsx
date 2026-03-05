@@ -1,3 +1,4 @@
+'use client'
 import { useState, useEffect } from 'react'
 import { DynamicIcon } from "@/components/ui/icon";
 import { Plus, Edit2, Trash2, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react'
