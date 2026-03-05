@@ -1,17 +1,43 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { DynamicIcon } from "@/components/ui/icon";
-import { useAuthStore, useOrdersStore } from '@/store'
+import { useAuthStore } from '@/store'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { OrderStatusBadge, EmptyState, Button } from '@/components/ui'
 import { AppHeader } from '@/components/layout/navigation'
+import type { Order, OrderItem } from '@/types'
 
 export default function OrdersPage() {
   const router = useRouter()
   const { user } = useAuthStore()
-  const { getCustomerOrders } = useOrdersStore()
 
-  const orders = user ? getCustomerOrders(user.id) : []
+  const [orders, setOrders] = useState<(Order & { items: OrderItem[] })[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/orders')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setOrders(data)
+        }
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error("Erro ao buscar pedidos:", err)
+        setLoading(false)
+      })
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-brand-cream flex flex-col items-center pt-24">
+        <div className="w-8 h-8 border-4 border-brand-red border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm text-brand-gray mt-4">Carregando histórico...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-brand-cream">

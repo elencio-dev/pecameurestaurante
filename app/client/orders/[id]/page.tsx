@@ -3,44 +3,64 @@ import { useEffect, useState } from 'react'
 import { DynamicIcon } from "@/components/ui/icon";
 import { useRouter, useParams } from 'next/navigation'
 import { ArrowLeft, Star, Phone, MapPin } from 'lucide-react'
-import { useOrdersStore } from '@/store'
 import { formatCurrency, ORDER_STATUS_LABELS } from '@/lib/utils'
 import { OrderStatusBadge } from '@/components/ui'
-import type { OrderStatus } from '@/types'
+import type { OrderStatus, Order, OrderItem } from '@/types'
 
 const STATUS_STEPS: OrderStatus[] = ['pending', 'accepted', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered']
 
 const STATUS_INFO: Record<OrderStatus, { icon: string; label: string; desc: string }> = {
-  pending:    { icon: '⏳', label: 'Aguardando confirmação', desc: 'O restaurante está verificando seu pedido' },
-  accepted:   { icon: '✅', label: 'Pedido aceito', desc: 'Ótimo! O restaurante confirmou seu pedido' },
-  preparing:  { icon: '👨‍🍳', label: 'Preparando', desc: 'Seu pedido está sendo preparado com carinho' },
-  ready:      { icon: '📦', label: 'Pronto', desc: 'Pedido pronto! Aguardando entregador' },
-  picked_up:  { icon: '🛵', label: 'Coletado', desc: 'O entregador pegou seu pedido' },
+  pending: { icon: '⏳', label: 'Aguardando confirmação', desc: 'O restaurante está verificando seu pedido' },
+  accepted: { icon: '✅', label: 'Pedido aceito', desc: 'Ótimo! O restaurante confirmou seu pedido' },
+  preparing: { icon: '👨‍🍳', label: 'Preparando', desc: 'Seu pedido está sendo preparado com carinho' },
+  ready: { icon: '📦', label: 'Pronto', desc: 'Pedido pronto! Aguardando entregador' },
+  picked_up: { icon: '🛵', label: 'Coletado', desc: 'O entregador pegou seu pedido' },
   on_the_way: { icon: '🚀', label: 'A caminho', desc: 'Seu pedido está a caminho!' },
-  delivered:  { icon: '🎉', label: 'Entregue!', desc: 'Aproveite sua refeição!' },
-  cancelled:  { icon: '❌', label: 'Cancelado', desc: 'Pedido cancelado' },
-  refunded:   { icon: '💰', label: 'Reembolsado', desc: 'Valor devolvido em até 3 dias úteis' },
+  delivered: { icon: '🎉', label: 'Entregue!', desc: 'Aproveite sua refeição!' },
+  cancelled: { icon: '❌', label: 'Cancelado', desc: 'Pedido cancelado' },
+  refunded: { icon: '💰', label: 'Reembolsado', desc: 'Valor devolvido em até 3 dias úteis' },
 }
 
 export default function OrderTrackingPage() {
   const params = useParams()
   const router = useRouter()
-  const { orders, updateOrderStatus } = useOrdersStore()
-  const [simulatingProgress, setSimulatingProgress] = useState(false)
 
-  const order = orders.find(o => o.id === params.id)
+  const [order, setOrder] = useState<(Order & { items: OrderItem[] }) | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  // Auto-progress simulation for demo
+  // Polling para checar status a cada 5 segundos
   useEffect(() => {
-    if (!order || order.status === 'delivered' || order.status === 'cancelled') return
-    const currentIdx = STATUS_STEPS.indexOf(order.status)
-    if (currentIdx < STATUS_STEPS.length - 1) {
-      const timer = setTimeout(() => {
-        updateOrderStatus(order.id, STATUS_STEPS[currentIdx + 1])
-      }, 8000)
-      return () => clearTimeout(timer)
+    let interval: ReturnType<typeof setInterval>;
+
+    const fetchOrder = async () => {
+      try {
+        const res = await fetch(`/api/orders/${params.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setOrder(data);
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [order?.status, order?.id])
+
+    fetchOrder()
+    // Atualiza a cada 5 segundos caso o restaurante mude o status
+    interval = setInterval(fetchOrder, 5000);
+
+    return () => clearInterval(interval);
+  }, [params.id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-brand-cream flex flex-col items-center justify-center py-10">
+        <div className="w-8 h-8 border-4 border-brand-red border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm text-brand-gray mt-4">Carregando pedido...</p>
+      </div>
+    )
+  }
 
   if (!order) {
     return (
@@ -94,11 +114,10 @@ export default function OrderTrackingPage() {
                 return (
                   <div key={step} className="flex gap-3">
                     <div className="flex flex-col items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${
-                        isDone ? 'bg-green-100 text-green-700' :
-                        isActive ? 'bg-brand-red/10 text-brand-red' :
-                        'bg-brand-cream-dark text-brand-gray/50'
-                      }`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${isDone ? 'bg-green-100 text-green-700' :
+                          isActive ? 'bg-brand-red/10 text-brand-red' :
+                            'bg-brand-cream-dark text-brand-gray/50'
+                        }`}>
                         {isDone ? '✓' : stepInfo.icon}
                       </div>
                       {idx < STATUS_STEPS.length - 2 && (
@@ -182,7 +201,7 @@ export default function OrderTrackingPage() {
             <div className="text-3xl mb-2">⭐</div>
             <p className="font-semibold text-brand-brown mb-3">Como foi a experiência?</p>
             <div className="flex justify-center gap-2">
-              {[1,2,3,4,5].map(n => (
+              {[1, 2, 3, 4, 5].map(n => (
                 <button key={n} className="w-10 h-10 text-2xl hover:scale-110 transition-transform">
                   {n <= 3 ? '☆' : '⭐'}
                 </button>

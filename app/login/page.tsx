@@ -1,52 +1,58 @@
 'use client'
 import { useState } from 'react'
-import { DynamicIcon } from "@/components/ui/icon";
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store'
-import type { User, UserRole } from '@/types'
-
-const DEMO_USERS: { label: string; icon: string; user: User }[] = [
-  {
-    label: 'Cliente', icon: 'ShoppingBag',
-    user: { id: 'u1', name: 'Ana Beatriz', email: 'ana@email.com', phone: '11999991111', role: 'customer', createdAt: '2024-01-10', isActive: true },
-  },
-  {
-    label: 'Restaurante', icon: 'Utensils',
-    user: { id: 'u2', name: 'Carlos Mendes', email: 'carlos@pizzaroma.com', phone: '11999992222', role: 'restaurant_owner', createdAt: '2024-01-05', isActive: true },
-  },
-  {
-    label: 'Entregador', icon: 'Bike',
-    user: { id: 'u3', name: 'Diego Lima', email: 'diego@email.com', phone: '11999993333', role: 'driver', createdAt: '2024-01-08', isActive: true },
-  },
-  {
-    label: 'Admin', icon: 'Settings',
-    user: { id: 'u0', name: 'Admin PMR', email: 'admin@pmr.com.br', phone: '11999990000', role: 'admin', createdAt: '2024-01-01', isActive: true },
-  },
-]
+import type { UserRole } from '@/types'
 
 export default function LoginPage() {
   const router = useRouter()
   const login = useAuthStore(s => s.login)
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const handleDemoLogin = (user: User) => {
-    setLoading(true)
-    setTimeout(() => {
-      login(user)
-      toast.success(`Bem-vindo(a), ${user.name.split(' ')[0]}! 👋`)
+  const handleLogin = async () => {
+    if (!email || !password) {
+      toast.error('Preencha os campos de e-mail e senha.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Erro ao realizar login');
+      }
+
+      // Atualiza o Zustand com os dados vindo do Prisma
+      login(data.user);
+      toast.success(`Bem-vindo(a), ${data.user.name.split(' ')[0]}! 👋`);
+
       const routes: Record<UserRole, string> = {
         customer: '/client',
         restaurant_owner: '/restaurant',
         driver: '/driver',
         admin: '/admin',
-      }
-      router.push(routes[user.role])
-      setLoading(false)
-    }, 800)
+      };
+
+      router.push(routes[data.user.role as UserRole]);
+    } catch (err: any) {
+      toast.error(err.message || "Falha ao entrar na conta.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -71,25 +77,6 @@ export default function LoginPage() {
             <p className="text-brand-gray text-sm mt-1">Não tem conta? <Link href="/register" className="text-brand-red font-semibold hover:underline">Cadastre-se</Link></p>
           </div>
 
-          {/* Demo login cards */}
-          <div className="bg-brand-brown/5 rounded-2xl p-4 mb-6">
-            <p className="text-xs font-bold text-brand-gray uppercase tracking-wider mb-3">Acesso rápido (demo)</p>
-            <div className="grid grid-cols-2 gap-2">
-              {DEMO_USERS.map((d) => (
-                <button
-                  key={d.user.role}
-                  onClick={() => handleDemoLogin(d.user)}
-                  disabled={loading}
-                  className="bg-white rounded-xl p-3 text-left hover:border-brand-red border-2 border-transparent transition-all hover:shadow-card disabled:opacity-50"
-                >
-                  <div className="text-2xl mb-1"><DynamicIcon name={d.icon} size="lg" /></div>
-                  <div className="font-semibold text-sm text-brand-brown">{d.label}</div>
-                  <div className="text-xs text-brand-gray truncate">{d.user.email}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Form */}
           <div className="space-y-4">
             <div>
@@ -97,6 +84,8 @@ export default function LoginPage() {
               <input
                 type="email"
                 placeholder="seu@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
                 className="w-full bg-white border-2 border-brand-cream-dark rounded-xl px-4 py-3 text-brand-brown placeholder-brand-gray/50 focus:outline-none focus:border-brand-red transition-colors text-sm"
               />
             </div>
@@ -106,6 +95,8 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
                   className="w-full bg-white border-2 border-brand-cream-dark rounded-xl px-4 py-3 pr-10 text-brand-brown placeholder-brand-gray/50 focus:outline-none focus:border-brand-red transition-colors text-sm"
                 />
                 <button
@@ -119,10 +110,11 @@ export default function LoginPage() {
             </div>
 
             <button
-              onClick={() => toast('Use um dos acessos demo acima! 👆')}
-              className="w-full bg-brand-red text-white font-bold py-4 rounded-2xl hover:bg-brand-red-dark transition-all shadow-brand hover:-translate-y-0.5"
+              onClick={handleLogin}
+              disabled={loading}
+              className="w-full bg-brand-red text-white font-bold py-4 rounded-2xl hover:bg-brand-red-dark transition-all shadow-brand hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:-translate-y-0"
             >
-              Entrar
+              {loading ? 'Acessando...' : 'Entrar'}
             </button>
           </div>
         </div>

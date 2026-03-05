@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import type { UserRole } from "@/types";
+import { createSession } from "@/lib/session";
 
 export async function POST(req: Request) {
     try {
@@ -106,6 +107,9 @@ export async function POST(req: Request) {
                 },
             });
         }
+
+        // Cria a Sessão (Cookie HTTP-Only) para já logar o novo usuário
+        await createSession(newUser.id, newUser.role);
 
         return NextResponse.json(
             {

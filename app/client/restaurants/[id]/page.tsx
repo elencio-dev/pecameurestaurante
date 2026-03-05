@@ -1,14 +1,20 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DynamicIcon } from "@/components/ui/icon";
 import { useRouter, useParams } from 'next/navigation'
 import { ArrowLeft, Star, Clock, MapPin, ShoppingCart, Plus, Minus, Info } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { MOCK_RESTAURANTS, MOCK_MENU_ITEMS, MOCK_MENU_CATEGORIES } from '@/lib/data'
 import { useCartStore, useAuthStore } from '@/store'
 import { formatCurrency, cn } from '@/lib/utils'
 import { Button, Badge, Price } from '@/components/ui'
-import type { MenuItem } from '@/types'
+import type { Restaurant, MenuItem, MenuCategory } from '@/types'
+
+function RestaurantLogo({ logo, name }: { logo: string, name: string }) {
+  if (logo.startsWith('/')) {
+    return <img src={logo} alt={name} className="w-full h-full object-cover" />;
+  }
+  return <span>{logo}</span>;
+}
 
 export default function RestaurantPage() {
   const params = useParams()
@@ -16,11 +22,40 @@ export default function RestaurantPage() {
   const { user } = useAuthStore()
   const { cart, addItem, updateQuantity, itemCount, subtotal, total } = useCartStore()
 
-  const restaurant = MOCK_RESTAURANTS.find(r => r.id === params.id)
-  const menuItems = MOCK_MENU_ITEMS[params.id as string] ?? []
-  const categories = MOCK_MENU_CATEGORIES[params.id as string] ?? []
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [categories, setCategories] = useState<MenuCategory[]>([])
+  const [loading, setLoading] = useState(true)
+  const [activeCategory, setActiveCategory] = useState('')
 
-  const [activeCategory, setActiveCategory] = useState(categories[0]?.id ?? '')
+  useEffect(() => {
+    fetch(`/api/restaurants/${params.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.restaurant) {
+          setRestaurant(data.restaurant)
+          setCategories(data.categories)
+          setMenuItems(data.menuItems)
+          if (data.categories.length > 0) {
+            setActiveCategory(data.categories[0].id)
+          }
+        }
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error(err)
+        setLoading(false)
+      })
+  }, [params.id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-brand-cream flex flex-col items-center justify-center py-10">
+        <div className="w-8 h-8 border-4 border-brand-red border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm text-brand-gray mt-4">Carregando cardápio...</p>
+      </div>
+    )
+  }
 
   if (!restaurant) {
     return (
@@ -54,8 +89,8 @@ export default function RestaurantPage() {
     <div className="min-h-screen bg-brand-cream">
       {/* Hero */}
       <div className="relative bg-brand-brown h-52 flex items-end overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center text-[120px] opacity-20">
-          {restaurant.logo}
+        <div className="absolute inset-0 flex items-center justify-center text-[120px] opacity-20 overflow-hidden">
+          <RestaurantLogo logo={restaurant.logo} name={restaurant.name} />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-brand-brown/95 via-brand-brown/30 to-transparent" />
 

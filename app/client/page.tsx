@@ -1,32 +1,48 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DynamicIcon } from "@/components/ui/icon";
 import { useRouter } from 'next/navigation'
 import { Search, Bell, MapPin, ChevronRight, Star, Clock } from 'lucide-react'
 import { useAuthStore, useCartStore } from '@/store'
-import { MOCK_RESTAURANTS } from '@/lib/data'
 import { RESTAURANT_CATEGORIES, formatCurrency, cn } from '@/lib/utils'
 import type { Restaurant, RestaurantCategory } from '@/types'
 import { AppHeader } from '@/components/layout/navigation'
 import { Badge, PulseDot } from '@/components/ui'
+import Image from 'next/image'
 
 export default function ClientHomePage() {
   const { user } = useAuthStore()
   const itemCount = useCartStore(s => s.itemCount)
   const router = useRouter()
+
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<'Todos' | RestaurantCategory>('Todos')
 
+  useEffect(() => {
+    fetch('/api/restaurants')
+      .then(res => res.json())
+      .then(data => {
+        setRestaurants(data)
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error(err)
+        setLoading(false)
+      })
+  }, [])
+
   const firstName = user?.name.split(' ')[0] ?? 'você'
 
-  const filtered = MOCK_RESTAURANTS.filter(r => {
+  const filtered = restaurants.filter(r => {
     const matchSearch = !search || r.name.toLowerCase().includes(search.toLowerCase()) || r.category.toLowerCase().includes(search.toLowerCase())
     const matchCat = activeCategory === 'Todos' || r.categories.includes(activeCategory as RestaurantCategory)
     return matchSearch && matchCat
   })
 
   return (
-    <div className="min-h-screen bg-brand-cream">
+    <div className="min-h-screen bg-brand-cream pb-24">
       {/* Hero section */}
       <div className="bg-brand-brown px-5 pt-5 pb-8 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
@@ -42,7 +58,7 @@ export default function ClientHomePage() {
           </div>
           <div className="flex items-center gap-2">
             {itemCount > 0 && (
-              <button onClick={() => router.push('/client/cart')} className="relative bg-brand-red rounded-xl px-3 py-2 flex items-center gap-1.5 text-white text-sm font-bold">
+              <button onClick={() => router.push('/client/cart')} className="relative bg-brand-red rounded-xl px-3 py-2 flex items-center gap-1.5 text-white text-sm font-bold shadow-brand hover:scale-105 transition-transform">
                 🛒
                 <span className="w-5 h-5 bg-white text-brand-red text-xs font-black rounded-full flex items-center justify-center">{itemCount}</span>
               </button>
@@ -96,45 +112,61 @@ export default function ClientHomePage() {
           </div>
         </div>
 
-        {/* Promoted */}
-        {activeCategory === 'Todos' && !search && (
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-display text-lg font-bold text-brand-brown">⭐ Destaques</h2>
-            </div>
-            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
-              {MOCK_RESTAURANTS.filter(r => r.isPromoted).map(r => (
-                <RestaurantCardSmall key={r.id} restaurant={r} onClick={() => router.push(`/client/restaurants/${r.id}`)} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* All restaurants */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display text-lg font-bold text-brand-brown">
-              {activeCategory === 'Todos' ? '🗺️ Perto de você' : `${activeCategory}`}
-            </h2>
-            <span className="text-xs text-brand-gray">{filtered.length} restaurantes</span>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-10">
+            <div className="w-8 h-8 border-4 border-brand-red border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm text-brand-gray mt-4">Buscando restaurantes reais...</p>
           </div>
+        ) : (
+          <>
+            {/* Promoted */}
+            {activeCategory === 'Todos' && !search && (
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="font-display text-lg font-bold text-brand-brown">⭐ Destaques</h2>
+                </div>
+                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+                  {restaurants.filter(r => r.isPromoted).map(r => (
+                    <RestaurantCardSmall key={r.id} restaurant={r} onClick={() => router.push(`/client/restaurants/${r.id}`)} />
+                  ))}
+                </div>
+              </section>
+            )}
 
-          {filtered.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-5xl mb-3">😕</div>
-              <p className="text-brand-gray">Nenhum restaurante encontrado</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filtered.map(r => (
-                <RestaurantCardFull key={r.id} restaurant={r} onClick={() => router.push(`/client/restaurants/${r.id}`)} />
-              ))}
-            </div>
-          )}
-        </section>
+            {/* All restaurants */}
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-display text-lg font-bold text-brand-brown">
+                  {activeCategory === 'Todos' ? '🗺️ Perto de você' : `${activeCategory}`}
+                </h2>
+                <span className="text-xs text-brand-gray">{filtered.length} estabelecimentos</span>
+              </div>
+
+              {filtered.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-5xl mb-3">😕</div>
+                  <p className="text-brand-gray">Nenhum restaurante encontrado</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filtered.map(r => (
+                    <RestaurantCardFull key={r.id} restaurant={r} onClick={() => router.push(`/client/restaurants/${r.id}`)} />
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </div>
     </div>
   )
+}
+
+function RestaurantLogo({ logo, name }: { logo: string, name: string }) {
+  if (logo.startsWith('/')) {
+    return <img src={logo} alt={name} className="w-full h-full object-cover" />;
+  }
+  return <span>{logo}</span>;
 }
 
 function RestaurantCardSmall({ restaurant: r, onClick }: { restaurant: Restaurant; onClick: () => void }) {
@@ -143,16 +175,16 @@ function RestaurantCardSmall({ restaurant: r, onClick }: { restaurant: Restauran
       onClick={onClick}
       className="flex-shrink-0 w-44 bg-white rounded-2xl overflow-hidden border border-brand-cream-dark hover:shadow-soft hover:-translate-y-0.5 transition-all text-left"
     >
-      <div className="h-28 bg-brand-cream-dark flex items-center justify-center text-5xl relative">
-        {r.logo}
-        <span className="absolute top-2 right-2 bg-white/90 text-brand-red text-[10px] font-bold px-2 py-0.5 rounded-full">
+      <div className="h-28 bg-brand-cream-dark flex items-center justify-center text-5xl relative overflow-hidden">
+        <RestaurantLogo logo={r.logo} name={r.name} />
+        <span className="absolute top-2 right-2 bg-white/90 text-brand-red text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm z-10">
           {r.status === 'open' ? '● Aberto' : '○ Fechado'}
         </span>
       </div>
       <div className="p-3">
         <div className="font-semibold text-sm text-brand-brown truncate">{r.name}</div>
         <div className="flex items-center gap-2 mt-1 text-xs text-brand-gray">
-          <span>⭐ {r.rating}</span>
+          <span className="font-medium text-amber-500">⭐ {Number(r.rating || 0).toFixed(1)}</span>
           <span>·</span>
           <span>{r.estimatedDeliveryTime}min</span>
         </div>
@@ -167,8 +199,8 @@ function RestaurantCardFull({ restaurant: r, onClick }: { restaurant: Restaurant
       onClick={onClick}
       className="w-full bg-white rounded-2xl overflow-hidden border border-brand-cream-dark hover:shadow-soft hover:-translate-y-0.5 transition-all text-left flex"
     >
-      <div className="w-28 flex-shrink-0 bg-brand-cream-dark flex items-center justify-center text-5xl">
-        {r.logo}
+      <div className="w-28 flex-shrink-0 bg-brand-cream-dark flex items-center justify-center text-5xl overflow-hidden">
+        <RestaurantLogo logo={r.logo} name={r.name} />
       </div>
       <div className="flex-1 p-4">
         <div className="flex items-start justify-between gap-2">
@@ -180,7 +212,7 @@ function RestaurantCardFull({ restaurant: r, onClick }: { restaurant: Restaurant
         </div>
 
         <div className="flex items-center gap-3 mt-3 text-xs text-brand-gray">
-          <span className="flex items-center gap-1"><Star size={11} className="text-amber-400 fill-amber-400" /> {r.rating} ({r.totalRatings})</span>
+          <span className="flex items-center gap-1 font-medium text-amber-500"><Star size={11} className="text-amber-400 fill-amber-400" /> {Number(r.rating || 0).toFixed(1)} ({r.totalRatings || 0})</span>
           <span className="flex items-center gap-1"><Clock size={11} /> {r.estimatedDeliveryTime}min</span>
           <span>🛵 {formatCurrency(r.deliveryFee)}</span>
         </div>

@@ -47,12 +47,28 @@ export default function CartPage() {
   const handleCheckout = async () => {
     if (!user) return
     setPlacing(true)
-    await new Promise(r => setTimeout(r, 1200))
-    const order = placeOrder(cart, user, paymentMethod)
-    clearCart()
-    toast.success('Pedido realizado! 🎉')
-    router.push(`/client/orders/${order.id}`)
-    setPlacing(false)
+
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cart, paymentMethod })
+      })
+
+      if (!res.ok) {
+        throw new Error('Falha ao registrar pedido.');
+      }
+
+      const order = await res.json()
+
+      clearCart()
+      toast.success('Pedido realizado! 🎉')
+      router.push(`/client/orders/${order.id}`)
+    } catch (err) {
+      toast.error('Erro ao fazer seu pedido. Tente novamente.')
+    } finally {
+      setPlacing(false)
+    }
   }
 
   return (
@@ -128,11 +144,10 @@ export default function CartPage() {
               <button
                 key={opt.value}
                 onClick={() => setPaymentMethod(opt.value)}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${
-                  paymentMethod === opt.value
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${paymentMethod === opt.value
                     ? 'bg-brand-red/5 border border-brand-red text-brand-red'
                     : 'hover:bg-brand-cream-dark text-brand-brown border border-transparent'
-                }`}
+                  }`}
               >
                 {opt.icon}
                 <span className="text-sm font-medium flex-1 text-left">{opt.label}</span>
