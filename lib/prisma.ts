@@ -1,16 +1,10 @@
-import { PrismaClient } from '@prisma/client'
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../generated/prisma/client";
 
-const prismaClientSingleton = () => {
-    return new PrismaClient()
-}
+const connectionString = `${process.env.DATABASE_URL}`;
 
-declare global {
-    var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>
-}
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
 
-// Previne a exaustão de conexões no modo de desenvolvimento (Fast Refresh do Next.js)
-const prisma = globalThis.prismaGlobal ?? prismaClientSingleton()
-
-export default prisma
-
-if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma
+export { prisma };
