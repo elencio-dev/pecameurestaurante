@@ -1,22 +1,6 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/login/page": "app/login/page.js",
-  "/register/page": "app/register/page.js",
   "/page": "app/page.js",
-  "/client/orders/[id]/page": "app/client/orders/[id]/page.js",
-  "/client/restaurants/page": "app/client/restaurants/page.js",
-  "/client/orders/page": "app/client/orders/page.js",
+  "/register/page": "app/register/page.js",
   "/client/page": "app/client/page.js",
-  "/driver/deliveries/page": "app/driver/deliveries/page.js",
-  "/driver/earnings/page": "app/driver/earnings/page.js",
-  "/admin/page": "app/admin/page.js",
-  "/driver/page": "app/driver/page.js",
-  "/restaurant/orders/page": "app/restaurant/orders/page.js",
-  "/client/cart/page": "app/client/cart/page.js",
-  "/driver/profile/page": "app/driver/profile/page.js",
-  "/restaurant/menu/page": "app/restaurant/menu/page.js",
-  "/restaurant/settings/page": "app/restaurant/settings/page.js",
-  "/restaurant/page": "app/restaurant/page.js",
-  "/client/profile/page": "app/client/profile/page.js",
   "/client/restaurants/[id]/page": "app/client/restaurants/[id]/page.js"
 }
