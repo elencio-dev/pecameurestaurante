@@ -81,8 +81,13 @@ function RegisterContent() {
   const handleSubmit = async () => {
     // Validar form do restaurante (se aplicável)
     if (role === 'restaurant_owner') {
-      if (!restaurantForm.restaurantName || !restaurantForm.cnpj || !restaurantForm.street) {
-        toast.error('Preencha o nome do restaurante, CNPJ e rua.');
+      if (!restaurantForm.restaurantName || !restaurantForm.cnpj) {
+        toast.error('Preencha o nome do restaurante e CNPJ.');
+        return;
+      }
+
+      if (!restaurantForm.street && !restaurantForm.lat) {
+        toast.error('Informe o Nome da Rua ou use o botão para Pegar GPS.');
         return;
       }
     }
@@ -281,7 +286,7 @@ function RegisterContent() {
           <button
             onClick={step < totalSteps ? handleNextStep : handleSubmit}
             disabled={loading}
-            className="w-full bg-brand-red text-white font-bold py-4 rounded-2xl hover:bg-brand-red-dark transition-all shadow-brand hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-70"
+            className="w-full bg-brand-red text-white font-bold py-4 rounded-2xl hover:bg-brand-red-dark transition-all shadow-brand hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-70 mt-6"
           >
             {loading ? 'Processando...' : step < totalSteps ? (<>Continuar <ArrowRight size={18} /></>) : 'Criar conta 🎉'}
           </button>
