@@ -45,14 +45,40 @@ function RegisterContent() {
     }
     setGettingLocation(true);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
         setRestaurantForm(prev => ({
           ...prev,
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
+          lat,
+          lng
         }));
-        setGettingLocation(false);
-        toast.success("Localização capturada!");
+
+        try {
+          // Reverse Geocoding via OpenStreetMap (Nominatim)
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.address) {
+              setRestaurantForm(prev => ({
+                ...prev,
+                street: data.address.road || prev.street,
+                neighborhood: data.address.suburb || data.address.neighbourhood || prev.neighborhood,
+                city: data.address.city || data.address.town || data.address.village || prev.city,
+                state: data.address.state || prev.state,
+                zipCode: data.address.postcode || prev.zipCode
+              }));
+              toast.success("Endereço preenchido pelo GPS!");
+            }
+          } else {
+            toast.success("Localização capturada!");
+          }
+        } catch (e) {
+          toast.success("Localização capturada!");
+        } finally {
+          setGettingLocation(false);
+        }
       },
       (error) => {
         console.error("Erro ao pegar GPS", error);

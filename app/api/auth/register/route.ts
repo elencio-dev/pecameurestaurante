@@ -77,6 +77,7 @@ export async function POST(req: Request) {
                     phone: phone, // Usa o mesmo telefone do dono
                     email: email, // Usa o mesmo email do dono
                     cnpj,
+                    status: "open", // Garante que a loja vai aparecer imediatamente como Aberta
                     estimatedDeliveryTime: 40,
                     minimumOrder: 20.0,
                     deliveryFee: 5.0,

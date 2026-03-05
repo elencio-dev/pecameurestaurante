@@ -1,14 +1,13 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { DynamicIcon } from "@/components/ui/icon";
-import { TrendingUp, Package, Star, Clock, DollarSign, Bell } from 'lucide-react'
+import { TrendingUp, Package, Star, Clock, DollarSign, Bell, Share2, Power } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store'
-import { MOCK_REVENUE_MONTHLY } from '@/lib/data'
 import { formatCurrency, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/lib/utils'
 import { Card, StatCard, OrderStatusBadge, PulseDot, Button } from '@/components/ui'
-import type { OrderStatus, Order, OrderItem } from '@/types'
+import type { OrderStatus, Order, OrderItem, Restaurant } from '@/types'
 import { cn } from '@/lib/utils'
 
 const STATUS_ACTIONS: Partial<Record<OrderStatus, { label: string; next: OrderStatus }>> = {
@@ -22,14 +21,24 @@ export default function RestaurantDashboard() {
   const { user } = useAuthStore()
   const [activeTab, setActiveTab] = useState<'active' | 'history'>('active')
   const [restaurantOrders, setRestaurantOrders] = useState<(Order & { items: OrderItem[] })[]>([])
+  const [profile, setProfile] = useState<Restaurant | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const fetchOrders = async () => {
+  const fetchData = async () => {
     try {
-      const res = await fetch('/api/orders')
-      if (res.ok) {
-        const data = await res.json()
+      const [ordersRes, profileRes] = await Promise.all([
+        fetch('/api/orders'),
+        fetch('/api/restaurant/my')
+      ])
+
+      if (ordersRes.ok) {
+        const data = await ordersRes.json()
         if (Array.isArray(data)) setRestaurantOrders(data)
+      }
+
+      if (profileRes.ok) {
+        const pData = await profileRes.json()
+        setProfile(pData)
       }
     } catch (err) {
       console.error(err)
@@ -39,8 +48,8 @@ export default function RestaurantDashboard() {
   }
 
   useEffect(() => {
-    fetchOrders()
-    const interval = setInterval(fetchOrders, 10000) // Poll a cada 10s
+    fetchData()
+    const interval = setInterval(fetchData, 10000) // Poll a cada 10s
     return () => clearInterval(interval)
   }, [])
 
@@ -53,12 +62,41 @@ export default function RestaurantDashboard() {
       })
       if (res.ok) {
         toast.success(`Pedido atualizado: ${ORDER_STATUS_LABELS[status]}`)
-        fetchOrders()
+        fetchData()
       } else {
         toast.error("Erro ao atualizar status.")
       }
     } catch (err) {
       toast.error("Erro na comunicação com o servidor.")
+    }
+  }
+
+  const toggleRestaurantStatus = async () => {
+    if (!profile) return;
+    const newStatus = profile.status === 'open' ? 'closed' : 'open';
+    const toastId = toast.loading('Atualizando status...')
+    try {
+      const res = await fetch(`/api/restaurant/my/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      if (res.ok) {
+        toast.success(newStatus === 'open' ? 'Seu delivery agora está ABERTO! 🟢' : 'Delivery FECHADO temporariamente 🔴', { id: toastId });
+        setProfile(prev => prev ? { ...prev, status: newStatus as any } : null);
+      } else {
+        toast.error('Erro ao mudar o status', { id: toastId })
+      }
+    } catch (e) {
+      toast.error('Erro de conexão', { id: toastId })
+    }
+  }
+
+  const copyToClipboard = () => {
+    if (profile?.id) {
+      const url = `${window.location.origin}/client/restaurants/${profile.id}`;
+      navigator.clipboard.writeText(url);
+      toast.success("Link copiado! Cole no WhatsApp ou Instagram.");
     }
   }
 
@@ -77,27 +115,29 @@ export default function RestaurantDashboard() {
   const todayPlatformFees = todayOrders * 1.00
   const pendingCount = activeOrders.filter(o => o.status === 'pending').length
 
-  const restaurantName = restaurantOrders.length > 0 ? restaurantOrders[0].restaurantName : user?.name
+  const restaurantName = profile?.name || user?.name
 
-  if (loading && restaurantOrders.length === 0) {
+  if (loading && restaurantOrders.length === 0 && !profile) {
     return <div className="min-h-screen bg-brand-cream flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-brand-red border-t-transparent rounded-full animate-spin"></div>
     </div>
   }
 
+  const isOpen = profile?.status === 'open';
+
   return (
     <div className="min-h-screen bg-brand-cream pb-24">
       {/* Header */}
-      <div className="bg-brand-brown px-5 pt-5 pb-6 relative overflow-hidden">
-        <div className="absolute -right-12 -top-12 w-48 h-48 bg-brand-red/10 rounded-full" />
+      <div className={cn("px-5 pt-5 pb-6 relative overflow-hidden transition-colors", isOpen ? "bg-brand-brown" : "bg-gray-800")}>
+        <div className={cn("absolute -right-12 -top-12 w-48 h-48 rounded-full", isOpen ? "bg-brand-red/10" : "bg-gray-700/50")} />
         <div className="flex items-center justify-between mb-3 relative z-10">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand-red rounded-lg flex items-center justify-center text-base">🍽️</div>
+            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-base", isOpen ? "bg-brand-red" : "bg-gray-700")}>🍽️</div>
             <span className="font-display text-lg font-black text-brand-cream">Painel PMR</span>
           </div>
           <div className="flex items-center gap-2">
             {pendingCount > 0 && (
-              <div className="bg-brand-red text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-brand">
+              <div className="bg-brand-red text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-brand animate-pulse">
                 <PulseDot color="bg-white" />
                 {pendingCount} novo{pendingCount > 1 ? 's' : ''}
               </div>
@@ -105,19 +145,41 @@ export default function RestaurantDashboard() {
             <button className="w-9 h-9 bg-brand-cream/10 rounded-xl flex items-center justify-center text-brand-cream/70">
               <Bell size={17} />
             </button>
+            <button onClick={toggleRestaurantStatus} className={cn("ml-1 px-3 h-9 rounded-xl flex items-center justify-center gap-1 text-xs font-bold transition-all shadow-sm", isOpen ? "bg-red-500/20 text-red-100 hover:bg-red-500/30" : "bg-green-500 text-white hover:bg-green-600")} title={isOpen ? "Fechar Restaurante" : "Abrir Restaurante"}>
+              <Power size={14} /> {isOpen ? 'Fechar' : 'Abrir'}
+            </button>
           </div>
         </div>
         <div className="relative z-10">
           <p className="text-brand-cream/50 text-sm">Olá,</p>
           <h1 className="font-display text-2xl font-black text-brand-cream">{restaurantName} 👋</h1>
           <div className="flex items-center gap-1.5 mt-1">
-            <PulseDot color="bg-green-400" />
-            <span className="text-green-400 text-xs font-medium">Restaurante aberto e recebendo pedidos</span>
+            <PulseDot color={isOpen ? "bg-green-400" : "bg-gray-500"} />
+            <span className={cn("text-xs font-medium", isOpen ? "text-green-400" : "text-gray-400")}>
+              {isOpen ? 'Restaurante aberto e recebendo pedidos' : 'Restaurante fechado no momento'}
+            </span>
           </div>
         </div>
       </div>
 
       <div className="px-4 py-5 space-y-5">
+
+        {/* Share Link Card */}
+        {profile && (
+          <Card className="p-4 bg-brand-red text-white border-0 shadow-brand overflow-hidden relative">
+            <div className="absolute -right-8 -top-8 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
+            <div className="relative z-10 flex items-center justify-between">
+              <div>
+                <h3 className="font-display font-bold text-lg mb-0.5">Atraia clientes!</h3>
+                <p className="text-white/80 text-xs">Divulgue o seu cardápio nas redes sociais.</p>
+              </div>
+              <Button variant="secondary" size="sm" onClick={copyToClipboard} className="bg-white text-brand-red hover:bg-white/90 shadow-sm flex gap-1.5 shrink-0">
+                <Share2 size={14} /> Copiar Link
+              </Button>
+            </div>
+          </Card>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
           <StatCard
