@@ -170,7 +170,7 @@ export const useOrdersStore = create<OrdersState>()(
             id: `oi${Date.now()}${idx}`,
             menuItemId: ci.menuItem.id,
             menuItemName: ci.menuItem.name,
-            emoji: ci.menuItem.emoji,
+            icon: ci.menuItem.icon,
             quantity: ci.quantity,
             unitPrice: ci.menuItem.price,
             totalPrice: ci.menuItem.price * ci.quantity,

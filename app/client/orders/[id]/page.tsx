@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { DynamicIcon } from "@/components/ui/icon";
 import { useRouter, useParams } from 'next/navigation'
 import { ArrowLeft, Star, Phone, MapPin } from 'lucide-react'
 import { useOrdersStore } from '@/store'
@@ -144,7 +145,7 @@ export default function OrderTrackingPage() {
           <div className="divide-y divide-brand-cream-dark">
             {order.items.map(item => (
               <div key={item.id} className="flex items-center gap-3 px-4 py-3">
-                <span className="text-2xl">{item.emoji}</span>
+                <span className="text-2xl"><DynamicIcon name={item.icon} size="md" /></span>
                 <div className="flex-1">
                   <span className="text-sm font-medium text-brand-brown">{item.menuItemName}</span>
                   <span className="text-xs text-brand-gray ml-2">×{item.quantity}</span>

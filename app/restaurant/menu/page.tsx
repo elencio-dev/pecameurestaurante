@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { DynamicIcon } from "@/components/ui/icon";
 import { Plus, Edit2, Trash2, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { MOCK_RESTAURANTS, MOCK_MENU_ITEMS, MOCK_MENU_CATEGORIES } from '@/lib/data'
@@ -71,7 +72,7 @@ export default function RestaurantMenuPage() {
                   {items.map(item => (
                     <div key={item.id} className="flex items-center gap-3 px-4 py-3">
                       <div className="w-12 h-12 bg-brand-cream-dark rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
-                        {item.emoji}
+                        <DynamicIcon name={item.icon} size="md" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">

@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { DynamicIcon } from "@/components/ui/icon";
 import { useOrdersStore } from '@/store'
 import { formatCurrency, ORDER_STATUS_LABELS } from '@/lib/utils'
 import { OrderStatusBadge, Card, Button, PulseDot } from '@/components/ui'
@@ -84,7 +85,7 @@ export default function RestaurantOrdersPage() {
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {order.items.map(item => (
                     <span key={item.id} className="text-xs bg-brand-cream-dark text-brand-brown px-2.5 py-1 rounded-full">
-                      {item.emoji} {item.quantity}× {item.menuItemName}
+                      <DynamicIcon name={item.icon} size="md" /> {item.quantity}× {item.menuItemName}
                     </span>
                   ))}
                 </div>

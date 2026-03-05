@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { DynamicIcon } from "@/components/ui/icon";
 import { useRouter } from 'next/navigation'
 import { Search, Bell, MapPin, ChevronRight, Star, Clock } from 'lucide-react'
 import { useAuthStore, useCartStore } from '@/store'
@@ -77,7 +78,7 @@ export default function ClientHomePage() {
         {/* Categories */}
         <div>
           <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
-            {[{ value: 'Todos', emoji: '🍽️' }, ...RESTAURANT_CATEGORIES].map((cat) => (
+            {[{ value: 'Todos', icon: 'Utensils' }, ...RESTAURANT_CATEGORIES].map((cat) => (
               <button
                 key={cat.value}
                 onClick={() => setActiveCategory(cat.value as any)}
@@ -88,7 +89,7 @@ export default function ClientHomePage() {
                     : 'bg-white text-brand-brown border border-brand-cream-dark hover:border-brand-red/40'
                 )}
               >
-                <span>{cat.emoji}</span>
+                <span><DynamicIcon name={cat.icon} size="md" /></span>
                 <span>{cat.value}</span>
               </button>
             ))}

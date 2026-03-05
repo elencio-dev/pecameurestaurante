@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { DynamicIcon } from "@/components/ui/icon";
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Smartphone, Banknote, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -81,7 +82,7 @@ export default function CartPage() {
             {cart.items.map(({ menuItem: item, quantity }) => (
               <div key={item.id} className="flex items-center gap-3 px-4 py-3">
                 <div className="w-12 h-12 bg-brand-cream-dark rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
-                  {item.emoji}
+                  <DynamicIcon name={item.icon} size="md" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm text-brand-brown truncate">{item.name}</div>

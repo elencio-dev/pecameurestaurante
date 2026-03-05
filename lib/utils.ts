@@ -67,14 +67,14 @@ export const RESTAURANT_STATUS_LABELS: Record<RestaurantStatus, string> = {
 }
 
 export const RESTAURANT_CATEGORIES = [
-  { value: 'Pizza',        emoji: '🍕' },
-  { value: 'Hambúrguer',   emoji: '🍔' },
-  { value: 'Japonês',      emoji: '🍣' },
-  { value: 'Árabe',        emoji: '🥙' },
-  { value: 'Brasileiro',   emoji: '🍖' },
-  { value: 'Italiano',     emoji: '🍝' },
-  { value: 'Mexicano',     emoji: '🌮' },
-  { value: 'Saudável',     emoji: '🥗' },
-  { value: 'Doces',        emoji: '🍰' },
-  { value: 'Frutos do Mar',emoji: '🦞' },
+  { value: 'Pizza',        icon: 'Pizza' },
+  { value: 'Hambúrguer',   icon: 'Sandwich' },
+  { value: 'Japonês',      icon: 'Fish' },
+  { value: 'Árabe',        icon: 'Sandwich' },
+  { value: 'Brasileiro',   icon: 'Beef' },
+  { value: 'Italiano',     icon: 'UtensilsCrossed' },
+  { value: 'Mexicano',     icon: 'Sandwich' },
+  { value: 'Saudável',     icon: 'Salad' },
+  { value: 'Doces',        icon: 'Cake' },
+  { value: 'Frutos do Mar',icon: 'Fish' },
 ]

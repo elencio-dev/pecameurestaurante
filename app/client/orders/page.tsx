@@ -1,5 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
+import { DynamicIcon } from "@/components/ui/icon";
 import { useAuthStore, useOrdersStore } from '@/store'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { OrderStatusBadge, EmptyState, Button } from '@/components/ui'
@@ -41,7 +42,7 @@ export default function OrdersPage() {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-brand-gray mb-3 flex-wrap">
                   {order.items.slice(0, 3).map(item => (
-                    <span key={item.id}>{item.emoji} {item.menuItemName}</span>
+                    <span key={item.id}><DynamicIcon name={item.icon} size="md" /> {item.menuItemName}</span>
                   ))}
                   {order.items.length > 3 && <span>+{order.items.length - 3} mais</span>}
                 </div>

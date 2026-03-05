@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { DynamicIcon } from "@/components/ui/icon";
 import { useRouter, useParams } from 'next/navigation'
 import { ArrowLeft, Star, Clock, MapPin, ShoppingCart, Plus, Minus, Info } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -111,7 +112,7 @@ export default function RestaurantPage() {
                   return (
                     <div key={item.id} className="bg-white rounded-2xl border border-brand-cream-dark p-4 flex gap-3">
                       <div className="w-20 h-20 flex-shrink-0 bg-brand-cream-dark rounded-xl flex items-center justify-center text-4xl">
-                        {item.emoji}
+                        <DynamicIcon name={item.icon} size="md" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">

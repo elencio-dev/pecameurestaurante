@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { DynamicIcon } from "@/components/ui/icon";
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
@@ -7,21 +8,21 @@ import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store'
 import type { User, UserRole } from '@/types'
 
-const DEMO_USERS: { label: string; emoji: string; user: User }[] = [
+const DEMO_USERS: { label: string; icon: string; user: User }[] = [
   {
-    label: 'Cliente', emoji: '🛍️',
+    label: 'Cliente', icon: 'ShoppingBag',
     user: { id: 'u1', name: 'Ana Beatriz', email: 'ana@email.com', phone: '11999991111', role: 'customer', createdAt: '2024-01-10', isActive: true },
   },
   {
-    label: 'Restaurante', emoji: '🍽️',
+    label: 'Restaurante', icon: 'Utensils',
     user: { id: 'u2', name: 'Carlos Mendes', email: 'carlos@pizzaroma.com', phone: '11999992222', role: 'restaurant_owner', createdAt: '2024-01-05', isActive: true },
   },
   {
-    label: 'Entregador', emoji: '🛵',
+    label: 'Entregador', icon: 'Bike',
     user: { id: 'u3', name: 'Diego Lima', email: 'diego@email.com', phone: '11999993333', role: 'driver', createdAt: '2024-01-08', isActive: true },
   },
   {
-    label: 'Admin', emoji: '⚙️',
+    label: 'Admin', icon: 'Settings',
     user: { id: 'u0', name: 'Admin PMR', email: 'admin@pmr.com.br', phone: '11999990000', role: 'admin', createdAt: '2024-01-01', isActive: true },
   },
 ]
@@ -81,7 +82,7 @@ export default function LoginPage() {
                   disabled={loading}
                   className="bg-white rounded-xl p-3 text-left hover:border-brand-red border-2 border-transparent transition-all hover:shadow-card disabled:opacity-50"
                 >
-                  <div className="text-2xl mb-1">{d.emoji}</div>
+                  <div className="text-2xl mb-1"><DynamicIcon name={d.icon} size="lg" /></div>
                   <div className="font-semibold text-sm text-brand-brown">{d.label}</div>
                   <div className="text-xs text-brand-gray truncate">{d.user.email}</div>
                 </button>

@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { DynamicIcon } from "@/components/ui/icon";
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
@@ -9,9 +10,9 @@ import type { UserRole } from '@/types'
 import { cn } from '@/lib/utils'
 
 const ROLES = [
-  { value: 'customer' as UserRole, label: 'Cliente', emoji: '🛍️', desc: 'Quero pedir comida' },
-  { value: 'restaurant_owner' as UserRole, label: 'Restaurante', emoji: '🍽️', desc: 'Quero receber pedidos' },
-  { value: 'driver' as UserRole, label: 'Entregador', emoji: '🛵', desc: 'Quero fazer entregas' },
+  { value: 'customer' as UserRole, label: 'Cliente', icon: 'ShoppingBag', desc: 'Quero pedir comida' },
+  { value: 'restaurant_owner' as UserRole, label: 'Restaurante', icon: 'Utensils', desc: 'Quero receber pedidos' },
+  { value: 'driver' as UserRole, label: 'Entregador', icon: 'Bike', desc: 'Quero fazer entregas' },
 ]
 
 export default function RegisterPage() {
@@ -92,7 +93,7 @@ export default function RegisterPage() {
                       : 'border-brand-cream-dark bg-white hover:border-brand-red/40'
                   )}
                 >
-                  <span className="text-3xl">{r.emoji}</span>
+                  <span className="text-3xl"><DynamicIcon name={r.icon} size="xl" /></span>
                   <div className="flex-1">
                     <div className="font-semibold text-brand-brown">{r.label}</div>
                     <div className="text-sm text-brand-gray">{r.desc}</div>
