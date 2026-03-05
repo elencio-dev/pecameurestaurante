@@ -15,7 +15,9 @@ const ROLES = [
   { value: 'driver' as UserRole, label: 'Entregador', icon: 'Bike', desc: 'Quero fazer entregas' },
 ]
 
-export default function RegisterPage() {
+import { Suspense } from 'react'
+
+function RegisterContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const login = useAuthStore(s => s.login)
@@ -140,5 +142,17 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-brand-cream flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-brand-red border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <RegisterContent />
+    </Suspense>
   )
 }
