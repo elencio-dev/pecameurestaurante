@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+//  ENUMS
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  customer
+  restaurant_owner
+  driver
+  admin
+}
+
+enum RestaurantStatus {
+  open
+  closed
+  paused
+  pending_approval
+}
+
+enum OrderStatus {
+  pending
+  accepted
+  preparing
+  ready
+  picked_up
+  on_the_way
+  delivered
+  cancelled
+  refunded
+}
+
+enum PaymentMethod {
+  pix
+  credit_card
+  debit_card
+  cash
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+enum DriverStatus {
+  offline
+  available
+  busy
+}
+
+enum VehicleType {
+  moto
+  bicicleta
+  carro
+}
+
+// ─────────────────────────────────────────────
+//  MODELS
+// ─────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String
+  role      UserRole @default(customer)
+  avatar    String?
+  createdAt DateTime @default(now())
+  isActive  Boolean  @default(true)
+
+  // Relations
+  driverProfile     DriverProfile?
+  restaurants       Restaurant[]
+  ordersAsCustomer  Order[] @relation("CustomerOrders")
+  ordersAsDriver    Order[] @relation("DriverOrders")
+}
+
+model DriverProfile {
+  id              String       @id @default(uuid())
+  userId          String       @unique
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cpf             String       @unique
+  vehicleType     VehicleType
+  vehiclePlate    String?
+  status          DriverStatus @default(offline)
+  isApproved      Boolean      @default(false)
+  currentLat      Float?
+  currentLng      Float?
+  totalDeliveries Int          @default(0)
+  rating          Float        @default(0)
+  
+  earnings        Json?        // Armazena { today, week, month }
+  bankAccount     Json?        // Armazena { bank, agency, account, type, pixKey }
+}
+
+model Address {
+  id           String  @id @default(uuid())
+  label        String
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  zipCode      String
+  lat          Float?
+  lng          Float?
+
+  // Relations
+  restaurantId String?     @unique
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orderId      String?     @unique
+  order        Order?      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Restaurant {
+  id                    String             @id @default(uuid())
+  ownerId               String
+  owner                 User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name                  String
+  slug                  String             @unique
+  description           String
+  category              String             
+  categories            String[]
+  logo                  String
+  coverImage            String?
+  phone                 String
+  email                 String
+  cnpj                  String
+  status                RestaurantStatus   @default(pending_approval)
+  openingHours          Json               // Array de { dayOfWeek, open, close, isOpen }
+  estimatedDeliveryTime Int
+  minimumOrder          Float
+  deliveryFee           Float
+  deliveryRadiusKm      Float
+  bankAccount           Json?
+  platformFeePerOrder   Float              @default(1.00)
+  rating                Float              @default(0)
+  totalRatings          Int                @default(0)
+  totalOrders           Int                @default(0)
+  acceptsOnlinePayment  Boolean            @default(true)
+  acceptsCash           Boolean            @default(true)
+  acceptsPix            Boolean            @default(true)
+  isPromoted            Boolean            @default(false)
+  createdAt             DateTime           @default(now())
+
+  // Relations
+  address               Address?
+  menuCategories        MenuCategory[]
+  menuItems             MenuItem[]
+  orders                Order[]
+}
+
+model MenuCategory {
+  id           String      @id @default(uuid())
+  restaurantId String
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  position     Int
+  isActive     Boolean     @default(true)
+  
+  menuItems    MenuItem[]
+}
+
+model MenuItem {
+  id              String      @id @default(uuid())
+  restaurantId    String
+  restaurant      Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categoryId      String
+  category        MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name            String
+  description     String
+  price           Float
+  originalPrice   Float?
+  icon            String
+  imageUrl        String?
+  isAvailable     Boolean     @default(true)
+  isHighlighted   Boolean     @default(false)
+  tags            String[]
+  prepTimeMinutes Int
+  calories        Int?
+  allergens       String[]
+  
+  customizations  Json?       // Array de MenuCustomization
+  
+  orderItems      OrderItem[]
+}
+
+model Order {
+  id                    String           @id @default(uuid())
+  orderNumber           String           @unique
+  customerId            String
+  customer              User             @relation("CustomerOrders", fields: [customerId], references: [id])
+  customerName          String
+  customerPhone         String
+  restaurantId          String
+  restaurant            Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurantName        String
+  driverId              String?
+  driver                User?            @relation("DriverOrders", fields: [driverId], references: [id])
+  driverName            String?
+  
+  deliveryAddress       Address?
+
+  subtotal              Float
+  deliveryFee           Float
+  discount              Float            @default(0)
+  platformFee           Float            @default(1.00)
+  total                 Float
+
+  paymentMethod         PaymentMethod
+  paymentStatus         PaymentStatus    @default(pending)
+
+  status                OrderStatus      @default(pending)
+  estimatedDeliveryTime Int
+  
+  createdAt             DateTime         @default(now())
+  acceptedAt            DateTime?
+  readyAt               DateTime?
+  pickedUpAt            DateTime?
+  deliveredAt           DateTime?
+  cancelledAt           DateTime?
+
+  customerRating        Int?
+  customerReview        String?
+  driverRating          Int?
+
+  items                 OrderItem[]
+  statusHistory         OrderStatusHistory[]
+}
+
+model OrderItem {
+  id                     String    @id @default(uuid())
+  orderId                String
+  order                  Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId             String
+  menuItem               MenuItem  @relation(fields: [menuItemId], references: [id])
+  menuItemName           String
+  icon                   String
+  quantity               Int
+  unitPrice              Float
+  totalPrice             Float
+  selectedCustomizations Json?     // Array de SelectedCustomization
+  notes                  String?
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(uuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  timestamp DateTime    @default(now())
+  note      String?
+}
